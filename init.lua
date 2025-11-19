@@ -1,5 +1,4 @@
--- use 2-spaces indent
-vim.opt.expandtab = true
+-- use 2-spaces indent vim.opt.expandtab = true
 vim.opt.shiftround = true
 vim.opt.shiftwidth = 2
 vim.opt.softtabstop = 2
@@ -8,7 +7,6 @@ vim.opt.tabstop = 2
 vim.opt.scrolloff = 3
 -- move the cursor to the previous/next line across the first/last character
 vim.opt.whichwrap = 'b,s,h,l,<,>,[,],~'
-
 vim.api.nvim_create_user_command(
 	'InitLua',
     	function()
@@ -54,4 +52,110 @@ create_autocmd('BufWritePre',{
   desc = 'Auto mkdir to save file'
 })
 
+  vim.keymap.set('n','p','p`]',{desc = 'Paste and to move the end'})
+  vim.keymap.set('n','P','P`]',{desc = 'Paste and to move the end'})
+  vim.keymap.set('x','p','P',{desc = 'Paste and to move the end'})
+  vim.keymap.set('x','P','p',{desc = 'Paste and to move the end'})
+  vim.keymap.set({'n','x'},'x','"_d',{desc = 'Delete using blackhole register' })
+  vim.keymap.set('n','X','"_D',{desc = 'Delete using blackhole register' })
+  vim.keymap.set('o','x','d',{desc = 'Delete using x'})
+  vim.keymap.set('c','<c-b>','<left>',{desc = 'Emacs like left' })
+  vim.keymap.set('c','<c-f>','<right>',{desc = 'Emacs like right' })
+  vim.keymap.set('c','<c-a>','<home>',{desc = 'Emacs like home' })
+  vim.keymap.set('c','<c-e>','<end>',{desc = 'Emacs like end' })
+  vim.keymap.set('c','<c-h>','<bs>',{desc = 'Emacs like bs' })
+  vim.keymap.set('c','<c-d>','<del>',{desc = 'Emacs like del' })
+  vim.keymap.set('n','<space>;','@:',{ desc = 'Re-run the last command' })
+  vim.keymap.set('n','<space>w','<cmd>write<cr>',{ desc = 'write' })
+vim.keymap.set({'n','x'},'so',':source<cr>',{ silent = true,desc = 'Source current script' })
+vim.keymap.set('c', '<c-n>', function()
+    return vim.fn.wildmenumode() == 1 and '<c-n>' or '<down>'
+end, { expr = true, desc = 'Select next' })
+vim.keymap.set('c', '<c-p>', function()
+  return vim.fn.wildmenumode() == 1 and '<c-p>' or '<up>'
+end, { expr = true, desc = 'Select previous' })
+vim.keymap.set('n', '<space>q', function()
+  if not pcall(vim.cmd.tabclose) then
+    vim.cmd.quit()
+  end
+end, { desc = 'Quit current tab or window' })
+vim.keymap.set('n', 'q:', '<nop>', { desc = 'Disable cmdwin' })
+-- abbreviation only for ex-command
+local function abbrev_excmd(lhs, rhs, opts)
+  vim.keymap.set('ca', lhs, function()
+    return vim.fn.getcmdtype() == ':' and rhs or lhs
+  end, vim.tbl_extend('force', { expr = true }, opts))
+end
+abbrev_excmd('qw','wq',{desc = 'fix typo'})
+abbrev_excmd('lup','lua =',{desc = 'lua print'})
+-- Clone 'mini.nvim' manually in a way that it gets managed by 'mini.deps'
+local path_package = vim.fn.stdpath('data') .. '/site/'
+local mini_path = path_package .. 'pack/deps/start/mini.nvim'
+if not vim.uv.fs_stat(mini_path) then
+  vim.cmd('echo "Installing `mini.nvim`" | redraw')
+  local clone_cmd = {
+    'git', 'clone', '--filter=blob:none',
+    'https://github.com/echasnovski/mini.nvim', mini_path
+  }
+  vim.fn.system(clone_cmd)
+  vim.cmd('packadd mini.nvim | helptags ALL')
+  vim.cmd('echo "Installed `mini.nvim`" | redraw')
+end
 
+-- Set up 'mini.deps' (customize to your liking)
+require('mini.deps').setup({ path = { package = path_package } })
+local add, now, later = MiniDeps.add,MiniDeps.now,MiniDeps.later
+now(function()
+  require('mini.icons').setup()
+end)
+now(function()
+  require('mini.basics').setup({
+   options = {
+      extra_ui = true,
+   },
+   
+   mappings = {
+      option_toggle_prefi = 'm',
+   },
+
+ })
+end)
+later(function()
+  add('https://github.com/vim-jp/vimdoc-ja')
+  -- Prefer Japanese as the help lauguage
+  vim.opt.helplang:prepend('ja')
+end)
+
+
+
+now(function()
+  require('mini.statusline').setup()
+  vim.opt.laststatus = 3
+  vim.opt.cmdheight = 0
+
+  -- ref: https://github.com/Shougo/shougo-s-github/blob/2f1c9acacd3a341a1fa40823761d9593266c65d4/vim/rc/vimrc#L47-L49
+  create_autocmd({ 'RecordingEnter', 'CmdlineEnter' }, {
+    pattern = '*',
+    callback = function()
+      vim.opt.cmdheight = 1
+    end,
+  })
+  create_autocmd('RecordingLeave', {
+    pattern = '*',
+    callback = function()
+      vim.opt.cmdheight = 0
+    end,
+  })
+  create_autocmd('CmdlineLeave', {
+    pattern = '*',
+    callback = function()
+      if vim.fn.reg_recording() == '' then
+        vim.opt.cmdheight = 0
+      end
+    end,
+  })
+end)
+
+now(function()
+  require('mini.misc').setup()
+end)
