@@ -35,13 +35,13 @@ local augroup = vim.api.nvim_create_augroup('init.lua', {})
 -- wrapper function to use internal augroup
 local function create_autocmd(event, opts)
   vim.api.nvim_create_autocmd(event, vim.tbl_extend('force',{
-    group = augroup,  
+    group = augroup,
   }, opts))
 end
 -- https://vim-jp.org/vim-users-jp/2011/02/20/Hack-202.html
 create_autocmd('BufWritePre',{
   pattern = '*',
-  callback = function(event) 
+  callback = function(event)
     local dir = vim.fs.dirname(event.file)
     local force = vim.v.cmdbang == 1
     if vim.fn.isdirectory(dir) == 0
@@ -113,7 +113,7 @@ now(function()
    options = {
       extra_ui = true,
    },
-   
+
    mappings = {
       option_toggle_prefi = 'm',
    },
@@ -158,4 +158,175 @@ end)
 
 now(function()
   require('mini.misc').setup()
+	MiniMisc.setup_restore_cursor()
+
+	vim.api.nvim_create_user_command('Zoom',function()
+		MiniMisc.zoom(0, {})
+	end, {desc = 'Zoom current buffer'})
+	vim.keymap.set('n','mz','<cmd>Zoom<cr>',{desc = 'Zoom current buffer'})
 end)
+now(function()
+  require('mini.notify').setup()
+	vim.api.nvim_create_user_command('NotifyHistory',function()
+			MiniNotify.show_history()
+	end, {desc = 'Show notify history'})
+
+
+	vim.notify = require('mini.notify').make_notify({
+		ERROR = {duration = 10000}
+
+})
+end)
+now(function()
+  vim.cmd.colorscheme('minischeme')
+end)
+later(function()
+  require('mini.cursorword').setup()
+end)
+later(function()
+  require('mini.indentscope').setup()
+end)
+later(function()
+  require('mini.trailspace').setup()
+	vim.api.nvim_create_user_command(
+  'Trim',
+  function()
+    MiniTrailspace.trim()
+    MiniTrailspace.trim_last_lines()
+  end,
+  { desc = 'Trim trailing space and last blank lines' }
+	)
+end)
+now(function()
+  require('mini.starter').setup()
+end)
+later(function()
+  require('mini.pairs').setup()
+end)
+later(function()
+  require('mini.surround').setup()
+end)
+later(function()
+  local gen_ai_spec = require('mini.extra').gen_ai_spec
+  require('mini.ai').setup({
+    custom_textobjects = {
+      B = gen_ai_spec.buffer(),
+      D = gen_ai_spec.diagnostic(),
+      I = gen_ai_spec.indent(),
+      L = gen_ai_spec.line(),
+      N = gen_ai_spec.number(),
+      J = { { '()%d%d%d%d%-%d%d%-%d%d()', '()%d%d%d%d%/%d%d%/%d%d()' } }
+    },
+  })
+end)
+later(function()
+  local function mode_nx(keys)
+    return { mode = 'n', keys = keys }, { mode = 'x', keys = keys }
+  end
+  local clue = require('mini.clue')
+  clue.setup({
+    triggers = {
+      -- Leader triggers
+      mode_nx('<leader>'),
+
+      -- Built-in completion
+      { mode = 'i', keys = '<c-x>' },
+
+      -- `g` key
+      mode_nx('g'),
+
+      -- Marks
+      mode_nx("'"),
+      mode_nx('`'),
+
+      -- Registers
+      mode_nx('"'),
+      { mode = 'i', keys = '<c-r>' },
+      { mode = 'c', keys = '<c-r>' },
+
+      -- Window commands
+      { mode = 'n', keys = '<c-w>' },
+
+      -- bracketed commands
+      { mode = 'n', keys = '[' },
+      { mode = 'n', keys = ']' },
+
+      -- `z` key
+      mode_nx('z'),
+
+      -- surround
+      mode_nx('s'),
+
+      -- text object
+      { mode = 'x', keys = 'i' },
+      { mode = 'x', keys = 'a' },
+      { mode = 'o', keys = 'i' },
+      { mode = 'o', keys = 'a' },
+
+      -- option toggle (mini.basics)
+      { mode = 'n', keys = 'm' },
+    },
+
+    clues = {
+      -- Enhance this by adding descriptions for <Leader> mapping groups
+      clue.gen_clues.builtin_completion(),
+      clue.gen_clues.g(),
+      clue.gen_clues.marks(),
+      clue.gen_clues.registers({ show_contents = true }),
+      clue.gen_clues.windows({ submode_resize = true, submode_move = true }),
+      clue.gen_clues.z(),
+    },
+  })
+end)
+vim.env.PATH = '/home/linuxbrew/.linuxbrew/bin/lua-language-server' .. ':' .. vim.env.PATH
+
+now(function()
+  vim.diagnostic.config({
+    virtual_text = true
+  })
+
+  create_autocmd('LspAttach', {
+    callback = function(args)
+      local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+
+      vim.keymap.set('n', 'grd', function()
+        vim.lsp.buf.definition()
+      end, { buffer = args.buf, desc = 'vim.lsp.buf.definition()' })
+
+      vim.keymap.set('n', '<space>i', function()
+        vim.lsp.buf.format({ bufnr = args.buf, id = client.id })
+      end, { buffer = args.buf, desc = 'Format buffer' })
+    end,
+  })
+
+  vim.lsp.config('*', {
+    root_markers = { '.git' },
+  })
+  vim.lsp.config('lua_ls', {
+    cmd = { 'lua-language-server' },
+    filetypes = { 'lua' },
+    on_init = function(client)
+      if client.workspace_folders then
+        local path = client.workspace_folders[1].name
+        if path ~= vim.fn.stdpath('config') and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc')) then
+          return
+        end
+      end
+      client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+        runtime = { version = 'LuaJIT' },
+        workspace = {
+          checkThirdParty = false,
+          library = vim.list_extend(vim.api.nvim_get_runtime_file('lua', true), {
+            '${3rd}/luv/library',
+            '${3rd}/busted/library',
+          }),
+        }
+      })
+    end,
+    settings = {
+      Lua = {}
+    }
+  })
+  vim.lsp.enable('lua_ls')
+end)
+
