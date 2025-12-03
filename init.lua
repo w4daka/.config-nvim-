@@ -530,3 +530,12 @@ end)
 later(function()
 	require('mini.bracketed').setup()
 end)
+later(function()
+	require('mini.splitjoin').setup({
+		mapping = {
+			toggle = 'gS',
+			split = 'ss',
+			join = 'sj',
+		},
+	})
+end)
