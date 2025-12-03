@@ -539,3 +539,6 @@ later(function()
 		},
 	})
 end)
+later(function()
+	require('mini.move').setup()
+end)
