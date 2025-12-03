@@ -67,6 +67,13 @@ create_autocmd('BufWritePre',{
   vim.keymap.set('c','<c-d>','<del>',{desc = 'Emacs like del' })
   vim.keymap.set('n','<space>;','@:',{ desc = 'Re-run the last command' })
   vim.keymap.set('n','<space>w','<cmd>write<cr>',{ desc = 'write' })
+	vim.keymap.set('i','<c-b>','<left>',{desc = 'Emacs like left' })
+  vim.keymap.set('i','<c-f>','<right>',{desc = 'Emacs like right' })
+  vim.keymap.set('i','<c-a>','<home>',{desc = 'Emacs like home' })
+  vim.keymap.set('i','<c-e>','<end>',{desc = 'Emacs like end' })
+  vim.keymap.set('i','<c-h>','<bs>',{desc = 'Emacs like bs' })
+  vim.keymap.set('i','<c-d>','<del>',{desc = 'Emacs like del' })
+
 vim.keymap.set({'n','x'},'so',':source<cr>',{ silent = true,desc = 'Source current script' })
 vim.keymap.set('c', '<c-n>', function()
     return vim.fn.wildmenumode() == 1 and '<c-n>' or '<down>'
@@ -198,8 +205,53 @@ later(function()
 	)
 end)
 now(function()
-  require('mini.starter').setup()
+	require('mini.sessions').setup()
 end)
+now(function()
+  require('mini.starter').setup()
+
+	  local function is_blank(arg)
+  return arg == nil or arg == ''
+end
+local function get_sessions(lead)
+  -- ref: https://qiita.com/delphinus/items/2c993527df40c9ebaea7
+  return vim
+    .iter(vim.fs.dir(MiniSessions.config.directory))
+    :map(function(v)
+      local name = vim.fn.fnamemodify(v, ':t:r')
+      return vim.startswith(name, lead) and name or nil
+    end)
+    :totable()
+end
+vim.api.nvim_create_user_command('SessionWrite', function(arg)
+  local session_name = is_blank(arg.args) and vim.v.this_session or arg.args
+  if is_blank(session_name) then
+    vim.notify('No session name specified', vim.log.levels.WARN)
+    return
+  end
+  vim.cmd('%argdelete')
+  MiniSessions.write(session_name)
+end, { desc = 'Write session', nargs = '?', complete = get_sessions })
+vim.api.nvim_create_user_command('SessionDelate', function(arg)
+	MiniSessions.select('delete',{force = arg.bang})
+end,{desc = 'Delete session',bang = true})
+vim.api.nvim_create_user_command('SessionLoad',function()
+	MiniSessions.select('read',{vebose = true})
+end,{desc = 'Load sessions'})
+
+vim.api.nvim_create_user_command('SessionEscape',function()
+	vim.v.this_session = ''
+end,{desc = 'Escape session'})
+vim.api.nvim_create_user_command('SessionReveal',function()
+	if is_blank(vim.v.this_session)then
+		vim.print('No session')
+		return
+	end
+	vim.print(vim.fn.fnamemodify(vim.v.this_session,':t:r'))
+end,{desc = 'Reveal session'})
+end)
+
+
 later(function()
   require('mini.pairs').setup()
 end)
@@ -329,4 +381,115 @@ now(function()
   })
   vim.lsp.enable('lua_ls')
 end)
+later(function()
+  require('mini.fuzzy').setup()
+  require('mini.completion').setup({
+    lsp_completion = {
+      process_items = MiniFuzzy.process_lsp_items,
+    },
+  })
 
+  -- improve fallback completion
+  vim.opt.complete = { '.', 'w', 'k', 'b', 'u' }
+  vim.opt.completeopt:append('fuzzy')
+  vim.opt.dictionary:append('/usr/share/dict/words')
+
+  -- define keycodes
+  local keys = {
+    cn = vim.keycode('<c-n>'),
+    cp = vim.keycode('<c-p>'),
+    ct = vim.keycode('<c-t>'),
+    cd = vim.keycode('<c-d>'),
+    cr = vim.keycode('<cr>'),
+    cy = vim.keycode('<c-y>'),
+  }
+
+  -- select by <tab>/<s-tab>
+  vim.keymap.set('i', '<tab>', function()
+    -- popup is visible -> next item
+    -- popup is NOT visible -> add indent
+    return vim.fn.pumvisible() == 1 and keys.cn or keys.ct
+  end, { expr = true, desc = 'Select next item if popup is visible' })
+  vim.keymap.set('i', '<s-tab>', function()
+    -- popup is visible -> previous item
+    -- popup is NOT visible -> remove indent
+    return vim.fn.pumvisible() == 1 and keys.cp or keys.cd
+  end, { expr = true, desc = 'Select previous item if popup is visible' })
+
+  -- complete by <cr>
+  vim.keymap.set('i', '<cr>', function()
+    if vim.fn.pumvisible() == 0 then
+      -- popup is NOT visible -> insert newline
+      return require('mini.pairs').cr()
+    end
+    local item_selected = vim.fn.complete_info()['selected'] ~= -1
+    if item_selected then
+      -- popup is visible and item is selected -> complete item
+      return keys.cy
+    end
+    -- popup is visible but item is NOT selected -> hide popup and insert newline
+    return keys.cy .. keys.cr
+  end, { expr = true, desc = 'Complete current item if item is selected' })
+vim.fn.execute('write','silent')
+  require('mini.snippets').setup({
+    mappings = {
+      jump_prev = '<c-k>',
+    },
+  })
+end)
+
+later(function ()
+	require('mini.tabline').setup()
+end)
+later(function ()
+	vim.api.nvim_create_user_command(
+		'Bufdelete',
+		function ()
+			MiniBufremove.delete()
+		end,
+		{desc = 'Remobe buffer'}
+
+	)
+end)
+now(function ()
+	require('mini.files').setup()
+	vim.api.nvim_create_user_command(
+		'Files',
+		function ()
+			MiniFiles.open()
+		end,
+		{desc = 'Open file exproler'}
+	)
+	vim.keymap.set('n','<space>e','<cmd>Files<cr>',{desc = 'Open file exproler'})
+end)
+later(function ()
+	require('mini.pick').setup()
+
+	vim.ui.select = MiniPick.ui_select
+	vim.keymap.set('n','<space>f',function ()
+		MiniPick.builtin.files({tool = 'git'})
+	end,{desc = 'mini.pick.files'})
+
+	vim.keymap.set('n','<space>b',function()
+		local wipeout_cur = function ()
+
+			vim.api.nvim_buf_delete(MiniPick.get_picker_matches().current.bufnr, {})
+			end
+			local buffer_mappings = {wipeout = {char = '<c-d>',func = wipeout_cur}}
+			MiniPick.builtin.buffers({include_current = false},{mappings = buffer_mappings})
+		end,{desc = 'mini.pick.buffer'})
+		require('mini.visits').setup()
+		vim.keymap.set('n','<space>h',function ()
+			require('mini.extra').pickers.visit_paths()
+		end,{desc = 'mini.extra.visit_paths'})
+
+		vim.keymap.set('c','h',function ()
+			if vim.fn.getcmdtype()..vim.fn.getcmdline() == ':h' then
+				return '<c-u>Pick help<cr>'
+			end
+			return 'h'
+		end,{expr = true , desc = 'mini.pick.help'})
+	end)
+later(function()
+	require('mini.diff').setup()
+end)
