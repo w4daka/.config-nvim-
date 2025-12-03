@@ -1,3 +1,5 @@
+-- cache init.lua
+vim.loader.enable()
 -- use 2-spaces indent vim.opt.expandtab = true
 vim.opt.shiftround = true
 vim.opt.shiftwidth = 2
