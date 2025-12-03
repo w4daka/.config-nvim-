@@ -505,4 +505,25 @@ later(function()
 	})
 
 	vim.keymap.set('n','RR','R',{desc = 'Replace mode'})
-)
+end)
+later(function()
+	require('mini.jump').setup({
+		delay = {
+			idel_stop = 10,
+		},
+	})
+end)
+later(function()
+	require('mini.jump2d').setup()
+end)
+later(function()
+	local animate = require('mini.animate')
+	animate.setup({
+		cursor = {
+			timing = animate.gen_timing.linear({duration = 100,unit = 'total'}),
+		},
+		scroll = {
+			timing = animate.gen_timing.linear({duration = 150,unit = 'total'}),
+		}
+	})
+end)
