@@ -562,3 +562,19 @@ later(function()
 	vim.keymap.set('n','mms',MiniMap.toggle_side,{desc = 'MiniMap.toggle_side'})
 	vim.keymap.set('n','mmt',MiniMap.toggle,{desc = 'MiniMap.toggle'})
 end)
+later(function()
+  add({
+    source = 'https://github.com/nvim-treesitter/nvim-treesitter',
+    hooks = {
+      post_checkout = function()
+        vim.cmd.TSUpdate()
+      end
+    },
+  })
+  ---@diagnostic disable-next-line: missing-fields
+  require('nvim-treesitter.configs').setup({
+    -- auto-install parsers
+    ensure_installed = { 'lua', 'vim', 'tsx' },
+    highlight = { enable = true },
+  })
+end)
