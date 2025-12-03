@@ -7,13 +7,7 @@ vim.opt.tabstop = 2
 vim.opt.scrolloff = 3
 -- move the cursor to the previous/next line across the first/last character
 vim.opt.whichwrap = 'b,s,h,l,<,>,[,],~'
-vim.api.nvim_create_user_command(
-	'InitLua',
-    	function()
-        	vim.cmd.edit(vim.fn.stdpath('config') .. '/init.lua')
-    end,
-    {desc ='Open init.lua'}
-)
+require('user_command')
 -- share clipboard with OS
 vim.g.clipboard = {
   name = "win32yank-wsl",
@@ -501,8 +495,8 @@ later(function()
 end)
 later(function()
 	require('mini.operators').setup({
-		replace = {prefix = 'R'}
-		exchange = {prefix = '/'}
+		replace = {prefix = 'R'},
+		exchange = {prefix = '/'},
 	})
 
 	vim.keymap.set('n','RR','R',{desc = 'Replace mode'})
@@ -521,9 +515,11 @@ later(function()
 	local animate = require('mini.animate')
 	animate.setup({
 		cursor = {
+		 -- Animate for 100 milliseconds with linear easing
 			timing = animate.gen_timing.linear({duration = 100,unit = 'total'}),
 		},
 		scroll = {
+			-- Animate for 150 milliseconds with linear easing
 			timing = animate.gen_timing.linear({duration = 150,unit = 'total'}),
 		}
 	})
