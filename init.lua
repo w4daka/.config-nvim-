@@ -378,7 +378,22 @@ now(function()
       Lua = {}
     }
   })
-  vim.lsp.enable('lua_ls')
+	vim.lsp.config('clangs',{
+	cmd = {'clangd'},
+	filetypes = {'c','cpp','objc','objcpp'},
+
+	settings = {
+		clangd = {
+		argument = {
+			'--compile-commands-dir=.',
+		 	'--background-index',
+      '--pch-storage=disk',
+			}
+		}
+	}
+})
+
+  vim.lsp.enable('lua_ls','clangd')
 end)
 later(function()
   require('mini.fuzzy').setup()
