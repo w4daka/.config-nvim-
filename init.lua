@@ -1,7 +1,7 @@
 -- cache init.lua
 vim.loader.enable()
-require('user_command')
-require('options')
+require('w4daka/user_command')
+require('w4daka/options')
 -- augroup for this config file
 local augroup = vim.api.nvim_create_augroup('init.lua', {})
 
