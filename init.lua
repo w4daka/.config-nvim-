@@ -1,31 +1,7 @@
 -- cache init.lua
 vim.loader.enable()
--- use 2-spaces indent vim.opt.expandtab = true
-vim.opt.shiftround = true
-vim.opt.shiftwidth = 2
-vim.opt.softtabstop = 2
-vim.opt.tabstop = 2
--- scroll offset as 3 lines
-vim.opt.scrolloff = 3
--- move the cursor to the previous/next line across the first/last character
-vim.opt.whichwrap = 'b,s,h,l,<,>,[,],~'
 require('user_command')
--- share clipboard with OS
-vim.g.clipboard = {
-  name = "win32yank-wsl",
-  copy = {
-    ["+"] = "win32yank.exe -i --crlf",
-    ["*"] = "win32yank.exe -i --crlf",
-  },
-  paste = {
-    ["+"] = "win32yank.exe -o --lf",
-    ["*"] = "win32yank.exe -o --lf",
-  },
-  cache_enabled = true,  -- これが重要
-}
-require('bool_fn')
-
-vim.opt.clipboard = 'unnamedplus'
+require('options')
 -- augroup for this config file
 local augroup = vim.api.nvim_create_augroup('init.lua', {})
 
@@ -593,3 +569,47 @@ later(function()
     highlight = { enable = true },
   })
 end)
+M = {}
+function M.setup_AC_commands()
+	local ac_library_path = '/home/doxaripo/lib/ac-library-master'
+	local cxx_flags = '-std=gnu++20 -O2 -I '.. ac_library_path
+
+	-- :ACmakeコマンド: 現在のファイルのみをコンパイル
+	vim.cmd([[
+		command! ACmake lua M.quick_compile()
+	]])
+
+-- :ACrun コマンド:コンパイルされた実行ファイルを実行
+	vim.cmd([[
+		command! ACrun lua M.quick_run()
+	]])
+
+	function M.quick_compile()
+		local current_file = vim.fn.expand('%')
+		local exec_name = vim.fn.expand('%:r')..'.out'
+
+		local compile_cmd = string.format('g++ %s %s -o %s', current_file, cxx_flags
+, exec_name)
+		print('Compiling...')
+		vim.fn.system(compile_cmd)
+
+		if vim.v.shell_error ~= 0 then
+			vim.notify("❌ Compile Error!", vim.log.levels.ERROR)
+		else
+			vim.notify("✅ Compile Success: " .. exec_name, vim.log.levels.INFO)
+		end
+	end
+
+	function M.quick_run()
+		local exec_name = vim.fn.expand('%:r')..'.out'
+
+		if vim.fn.filereadable(exec_name) == 0 then
+			vim.notify("⚠️ Executable not found. Run :ACmake first.", vim.log.levels.WARN)
+			return
+		end
+
+		vim.cmd(string.format('terminal ./%s',exec_name))
+	end
+end
+
+M.setup_AC_commands()
