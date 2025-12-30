@@ -367,7 +367,9 @@ now(function()
 -- 	}
 -- })
 
-  vim.lsp.enable('lua_ls' , 'clangd')
+  vim.lsp.enable('lua_ls')
+  vim.lsp.enable('clangd')
+	vim.lsp.enable('pyright')
 end)
 later(function()
   require('mini.fuzzy').setup()
