@@ -19,6 +19,6 @@ vim.g.clipboard = {
   },
   cache_enabled = true,  -- これが重要
 }
-require('bool_fn')
+require('w4daka/bool_fn')
 
 vim.opt.clipboard = 'unnamedplus'

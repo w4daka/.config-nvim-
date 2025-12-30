@@ -1,8 +1,8 @@
 -- cache init.lua
 vim.loader.enable()
+require('w4daka/bool_fn')
 require('w4daka/user_command')
 require('w4daka/options')
-require('w4daka/bool_fn')
 -- augroup for this config file
 local augroup = vim.api.nvim_create_augroup('init.lua', {})
 
@@ -484,7 +484,7 @@ end)
 later(function()
 	require('mini.git').setup()
 
-	vim.keymap.set({'n','x'},'<space>gs',MiniGit.show_at_curcor,{desc = 'Show at cursor'})
+	vim.keymap.set({'n','x'},'<space>gs',MiniGit.show_at_cursor,{desc = 'Show at cursor'})
 end)
 later(function()
 	require('mini.operators').setup({
