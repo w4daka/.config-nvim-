@@ -2,6 +2,7 @@
 vim.loader.enable()
 require('w4daka/user_command')
 require('w4daka/options')
+require('w4daka/bool_fn')
 -- augroup for this config file
 local augroup = vim.api.nvim_create_augroup('init.lua', {})
 
@@ -180,8 +181,6 @@ later(function()
 end)
 now(function()
 	require('mini.sessions').setup()
-end)
-now(function()
   require('mini.starter').setup()
 
 	  local function is_blank(arg)
@@ -301,7 +300,7 @@ later(function()
       clue.gen_clues.registers({ show_contents = true }),
       clue.gen_clues.windows({ submode_resize = true, submode_move = true }),
       clue.gen_clues.z(),
-			{mode = 'n',keys = 'mm',desc = '+mini.map'}
+			-- {mode = 'n',keys = 'mm',desc = '+mini.map'}
     },
   })
 end)
@@ -419,7 +418,7 @@ later(function()
     -- popup is visible but item is NOT selected -> hide popup and insert newline
     return keys.cy .. keys.cr
   end, { expr = true, desc = 'Complete current item if item is selected' })
-vim.fn.execute('write','silent')
+-- vim.fn.execute('write','silent')
   require('mini.snippets').setup({
     mappings = {
       jump_prev = '<c-k>',
