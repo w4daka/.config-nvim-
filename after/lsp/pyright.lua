@@ -1,10 +1,13 @@
 return{
+	cmd = {'pyright-langsever' , '--stdio'},
+	filetypes = {'python'},
 	settings = {
-	python = { 
+	python = {
 		analysis ={
 			autoSearchPaths = true,
 			useLibraryCodeForTypes = true,
 			diagnosticMode = 'openFilesOnly',
+			typeCheckingMode = 'basic',
 			},
 		},
 	},
