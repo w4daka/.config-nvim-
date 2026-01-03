@@ -569,3 +569,24 @@ later(function()
     highlight = { enable = true },
   })
 end)
+now(function()
+	add('https://github.com/folke/snacks.nvim')
+	require('snacks').setup({
+		indent = {
+			enabled = true,
+			indent = { enabled = true },
+			scope = { enabled = false },
+			animate = { enabled = false },
+		},
+		statuscolumn = { enabled = true },
+		picker = {
+			layout = { preset = 'ivy' },
+		},
+		bigfile = { enabled = true },
+	})
+
+	-- ターミナルをトグルする
+	vim.keymap.set('n', '<Leader><Leader>', Snacks.terminal.toggle, { desc = 'toggle terminal' })
+	vim.keymap.set('t', '<Leader><Leader>', Snacks.terminal.toggle, { desc = 'toggle terminal' })
+end)
+
